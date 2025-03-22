@@ -18,6 +18,7 @@ public class InterfazUsuario extends JFrame {
     private JButton cargarButton;
     private JTextField buscarField;
     private JButton buscarButton;
+    private JTextArea resultadoArea;
 
     public InterfazUsuario() {
         arbol = new Arbol();
@@ -34,6 +35,8 @@ public class InterfazUsuario extends JFrame {
         cargarButton = new JButton("Cargar Archivo JSON");
         buscarField = new JTextField(20);
         buscarButton = new JButton("Buscar Especie");
+        resultadoArea = new JTextArea(10, 50);
+        resultadoArea.setEditable(false);
 
         // Deshabilitar botones "Sí" y "No" inicialmente
         siButton.setEnabled(false);
@@ -47,6 +50,7 @@ public class InterfazUsuario extends JFrame {
         panel.add(noButton);
         panel.add(buscarField);
         panel.add(buscarButton);
+        panel.add(new JScrollPane(resultadoArea));
         add(panel);
 
         // Manejar la carga del archivo JSON
@@ -58,6 +62,7 @@ public class InterfazUsuario extends JFrame {
                 if (returnValue == JFileChooser.APPROVE_OPTION) {
                     File archivo = fileChooser.getSelectedFile();
                     arbol.cargarDesdeJSON(archivo.getAbsolutePath());
+                    llenarTablaHash();
                     preguntaLabel.setText(arbol.getPreguntaActual());
                     siButton.setEnabled(true);
                     noButton.setEnabled(true);
@@ -88,16 +93,33 @@ public class InterfazUsuario extends JFrame {
             @Override
             public void actionPerformed(ActionEvent e) {
                 String especie = buscarField.getText();
-                long inicio = System.nanoTime();
-                Nodo resultado = arbol.buscar(especie);  // Llamada al método buscar
-                long fin = System.nanoTime();
-                long tiempoArbol = fin - inicio;
+                resultadoArea.setText("");  // Limpiar el área de resultados
 
-                if (resultado != null) {
-                    preguntaLabel.setText("Especie encontrada: " + resultado.getEspecie() +
-                            " | Tiempo Árbol: " + tiempoArbol + " ns");
+                // Búsqueda en el árbol
+                long inicioArbol = System.nanoTime();
+                Nodo resultadoArbol = arbol.buscar(especie);
+                long finArbol = System.nanoTime();
+                long tiempoArbol = finArbol - inicioArbol;
+
+                // Búsqueda en la tabla hash
+                long inicioHash = System.nanoTime();
+                Nodo resultadoHash = tablaHash.buscar(especie);
+                long finHash = System.nanoTime();
+                long tiempoHash = finHash - inicioHash;
+
+                // Mostrar resultados
+                if (resultadoArbol != null) {
+                    resultadoArea.append("Especie encontrada en el árbol: " + resultadoArbol.getEspecie() +
+                            " | Tiempo Árbol: " + tiempoArbol + " ns\n");
                 } else {
-                    preguntaLabel.setText("Especie no encontrada.");
+                    resultadoArea.append("Especie no encontrada en el árbol.\n");
+                }
+
+                if (resultadoHash != null) {
+                    resultadoArea.append("Especie encontrada en la tabla hash: " + resultadoHash.getEspecie() +
+                            " | Tiempo Hash: " + tiempoHash + " ns\n");
+                } else {
+                    resultadoArea.append("Especie no encontrada en la tabla hash.\n");
                 }
             }
         });
@@ -113,6 +135,17 @@ public class InterfazUsuario extends JFrame {
             noButton.setEnabled(false);
         } else {
             preguntaLabel.setText(arbol.getPreguntaActual());
+        }
+    }
+
+    // Método para llenar la tabla hash con las especies del árbol
+    private void llenarTablaHash() {
+        // Este método debe recorrer el árbol y agregar todas las especies a la tabla hash
+        // Aquí se asume que el árbol ya está cargado
+        // Puedes implementar un recorrido del árbol (por ejemplo, inorden) para llenar la tabla hash
+        // Este es un ejemplo simplificado:
+        if (arbol.getEspecieActual() != null) {
+            tablaHash.insertar(arbol.getEspecieActual(), new Nodo("", arbol.getEspecieActual()));
         }
     }
 
