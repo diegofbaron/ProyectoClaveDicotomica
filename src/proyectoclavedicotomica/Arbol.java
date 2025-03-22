@@ -3,6 +3,9 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package proyectoclavedicotomica;
+
+import org.json.JSONArray;
+import org.json.JSONObject;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
@@ -28,11 +31,11 @@ public class Arbol {
 
         // Si la respuesta es "Sí", vamos al hijo izquierdo
         if (respuesta) {
-            nodo.izquierdo = insertarRec(nodo.izquierdo, pregunta, respuesta, especie);
+            nodo.setIzquierdo(insertarRec(nodo.getIzquierdo(), pregunta, respuesta, especie));
         }
         // Si la respuesta es "No", vamos al hijo derecho
         else {
-            nodo.derecho = insertarRec(nodo.derecho, pregunta, respuesta, especie);
+            nodo.setDerecho(insertarRec(nodo.getDerecho(), pregunta, respuesta, especie));
         }
 
         return nodo;
@@ -43,16 +46,16 @@ public class Arbol {
         if (raiz == null) {
             return null;
         }
-        return raiz.pregunta;
+        return raiz.getPregunta();
     }
 
     // Método para avanzar al siguiente nodo según la respuesta del usuario
     public void avanzar(boolean respuesta) {
         if (raiz != null) {
             if (respuesta) {
-                raiz = raiz.izquierdo;
+                raiz = raiz.getIzquierdo();
             } else {
-                raiz = raiz.derecho;
+                raiz = raiz.getDerecho();
             }
         }
     }
@@ -65,7 +68,7 @@ public class Arbol {
     // Método para obtener la especie actual (nodo hoja)
     public String getEspecieActual() {
         if (raiz != null && raiz.esHoja()) {
-            return raiz.especie;
+            return raiz.getEspecie();
         }
         return null;
     }
@@ -84,46 +87,35 @@ public class Arbol {
         }
     }
 
-    // Método para procesar manualmente el JSON
-    
+    // Método para procesar el JSON y construir el árbol
     private void procesarJSON(String json) {
-    // Eliminamos los espacios y saltos de línea
-    json = json.replaceAll("\\s", "");
+        JSONObject jsonObject = new JSONObject(json);
+        JSONArray especiesArray = jsonObject.getJSONArray("ClaveDicotomica");
 
-    // Extraemos las especies y las preguntas
-    int inicioEspecie = json.indexOf("\"") + 1;
-    int finEspecie = json.indexOf("\"", inicioEspecie);
-    String especie = json.substring(inicioEspecie, finEspecie);
+        for (int i = 0; i < especiesArray.length(); i++) {
+            JSONObject especieObject = especiesArray.getJSONObject(i);
+            String nombreEspecie = especieObject.keys().next();
+            JSONArray preguntasArray = especieObject.getJSONArray(nombreEspecie);
 
-    int inicioPregunta = json.indexOf("\"", finEspecie + 1) + 1;
-    int finPregunta = json.indexOf("\"", inicioPregunta);
-    String pregunta = json.substring(inicioPregunta, finPregunta);
+            Nodo nodoActual = null;
+            for (int j = 0; j < preguntasArray.length(); j++) {
+                JSONObject preguntaObject = preguntasArray.getJSONObject(j);
+                String pregunta = preguntaObject.keys().next();
+                boolean respuesta = preguntaObject.getBoolean(pregunta);
 
-    int inicioRespuesta = json.indexOf(":", finPregunta) + 1;
-    boolean respuesta = json.substring(inicioRespuesta, inicioRespuesta + 4).trim().equals("true");
-
-    // Insertamos la pregunta y la especie en el árbol
-    this.insertar(pregunta, respuesta, especie);
-}
-
-    // Clase interna para representar un nodo del árbol
-    private class Nodo {
-        String pregunta;  // La pregunta (nodo interno)
-        String especie;   // La especie (nodo hoja)
-        Nodo izquierdo;   // Hijo izquierdo (respuesta "Sí")
-        Nodo derecho;     // Hijo derecho (respuesta "No")
-
-        // Constructor para nodos internos (preguntas)
-        public Nodo(String pregunta, String especie) {
-            this.pregunta = pregunta;
-            this.especie = especie;
-            this.izquierdo = null;
-            this.derecho = null;
-        }
-
-        // Método para verificar si el nodo es una hoja
-        public boolean esHoja() {
-            return izquierdo == null && derecho == null;
+                if (nodoActual == null) {
+                    this.insertar(pregunta, respuesta, nombreEspecie);
+                    nodoActual = this.raiz;
+                } else {
+                    if (respuesta) {
+                        nodoActual.setIzquierdo(new Nodo(pregunta, nombreEspecie));
+                        nodoActual = nodoActual.getIzquierdo();
+                    } else {
+                        nodoActual.setDerecho(new Nodo(pregunta, nombreEspecie));
+                        nodoActual = nodoActual.getDerecho();
+                    }
+                }
+            }
         }
     }
 }
