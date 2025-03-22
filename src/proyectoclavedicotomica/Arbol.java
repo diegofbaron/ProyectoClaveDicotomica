@@ -73,6 +73,32 @@ public class Arbol {
         return null;
     }
 
+    // Método para buscar una especie en el árbol
+    public Nodo buscar(String especie) {
+        return buscarRec(raiz, especie);
+    }
+
+    // Método recursivo para buscar una especie
+    private Nodo buscarRec(Nodo nodo, String especie) {
+        if (nodo == null) {
+            return null;
+        }
+
+        // Si el nodo es una hoja y coincide con la especie, lo retornamos
+        if (nodo.esHoja() && nodo.getEspecie().equalsIgnoreCase(especie)) {
+            return nodo;
+        }
+
+        // Buscar en el subárbol izquierdo
+        Nodo resultadoIzquierdo = buscarRec(nodo.getIzquierdo(), especie);
+        if (resultadoIzquierdo != null) {
+            return resultadoIzquierdo;
+        }
+
+        // Buscar en el subárbol derecho
+        return buscarRec(nodo.getDerecho(), especie);
+    }
+
     // Método para cargar el árbol desde un archivo JSON
     public void cargarDesdeJSON(String rutaArchivo) {
         try (BufferedReader br = new BufferedReader(new FileReader(rutaArchivo))) {
