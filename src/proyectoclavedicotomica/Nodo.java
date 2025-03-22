@@ -3,6 +3,11 @@
  * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
  */
 package proyectoclavedicotomica;
+/*
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Licenses/license-default.txt to change this license
+ * Click nbfs://nbhost/SystemFileSystem/Templates/Classes/Class.java to edit this template
+ */
+
 
 /**
  *
@@ -11,14 +16,14 @@ package proyectoclavedicotomica;
 public class Nodo {
     // Atributos
     private String pregunta;      // La pregunta asociada al nodo
-    private boolean respuesta;    // La respuesta (true = Sí, false = No)
+    private String especie;       // La especie (nodo hoja)
     private Nodo izquierdo;       // Referencia al hijo izquierdo
     private Nodo derecho;         // Referencia al hijo derecho
 
-    // Constructor
-    public Nodo(String pregunta, boolean respuesta) {
+    // Constructor para nodos internos (preguntas)
+    public Nodo(String pregunta, String especie) {
         this.pregunta = pregunta;
-        this.respuesta = respuesta;
+        this.especie = especie;
         this.izquierdo = null;
         this.derecho = null;
     }
@@ -32,12 +37,12 @@ public class Nodo {
         this.pregunta = pregunta;
     }
 
-    public boolean getRespuesta() {
-        return respuesta;
+    public String getEspecie() {
+        return especie;
     }
 
-    public void setRespuesta(boolean respuesta) {
-        this.respuesta = respuesta;
+    public void setEspecie(String especie) {
+        this.especie = especie;
     }
 
     public Nodo getIzquierdo() {
@@ -65,7 +70,7 @@ public class Nodo {
     public String toString() {
         return "Nodo{" +
                 "pregunta='" + pregunta + '\'' +
-                ", respuesta=" + respuesta +
+                ", especie='" + especie + '\'' +
                 '}';
     }
 }
