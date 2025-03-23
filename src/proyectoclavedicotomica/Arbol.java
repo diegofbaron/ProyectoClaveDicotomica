@@ -6,142 +6,112 @@ package proyectoclavedicotomica;
 
 import org.json.JSONArray;
 import org.json.JSONObject;
+import org.json.JSONException;
 import java.io.BufferedReader;
 import java.io.FileReader;
 import java.io.IOException;
+import javax.swing.JOptionPane;
 
 public class Arbol {
     private Nodo raiz;
+    private Nodo nodoActual;
 
-    // Constructor
     public Arbol() {
         this.raiz = null;
+        this.nodoActual = null;
     }
 
-    // Método para insertar una pregunta o una especie en el árbol
-    public void insertar(String pregunta, boolean respuesta, String especie) {
-        raiz = insertarRec(raiz, pregunta, respuesta, especie);
-    }
-
-    // Método recursivo para insertar
-    private Nodo insertarRec(Nodo nodo, String pregunta, boolean respuesta, String especie) {
-        if (nodo == null) {
-            return new Nodo(pregunta, especie);
-        }
-
-        // Si la respuesta es "Sí", vamos al hijo izquierdo
-        if (respuesta) {
-            nodo.setIzquierdo(insertarRec(nodo.getIzquierdo(), pregunta, respuesta, especie));
-        }
-        // Si la respuesta es "No", vamos al hijo derecho
-        else {
-            nodo.setDerecho(insertarRec(nodo.getDerecho(), pregunta, respuesta, especie));
-        }
-
-        return nodo;
-    }
-
-    // Método para obtener la pregunta actual
     public String getPreguntaActual() {
-        if (raiz == null) {
-            return null;
-        }
-        return raiz.getPregunta();
+        return (nodoActual != null) ? nodoActual.getPregunta() : "Cargue un JSON para comenzar";
     }
 
-    // Método para avanzar al siguiente nodo según la respuesta del usuario
     public void avanzar(boolean respuesta) {
-        if (raiz != null) {
-            if (respuesta) {
-                raiz = raiz.getIzquierdo();
-            } else {
-                raiz = raiz.getDerecho();
-            }
+        if (nodoActual != null) {
+            nodoActual = respuesta ? nodoActual.getIzquierdo() : nodoActual.getDerecho();
         }
     }
 
-    // Método para verificar si se ha llegado a una especie (nodo hoja)
     public boolean esEspecie() {
-        return raiz != null && raiz.esHoja();
+        return (nodoActual != null) && nodoActual.esHoja();
     }
 
-    // Método para obtener la especie actual (nodo hoja)
     public String getEspecieActual() {
-        if (raiz != null && raiz.esHoja()) {
-            return raiz.getEspecie();
-        }
-        return null;
+        return (nodoActual != null && nodoActual.esHoja()) ? nodoActual.getEspecie() : null;
     }
 
-    // Método para buscar una especie en el árbol
     public Nodo buscar(String especie) {
-        return buscarRec(raiz, especie);
+        return buscarRec(raiz, normalizarTexto(especie));
     }
 
-    // Método recursivo para buscar una especie
     private Nodo buscarRec(Nodo nodo, String especie) {
-        if (nodo == null) {
-            return null;
-        }
-
-        // Si el nodo es una hoja y coincide con la especie, lo retornamos
-        if (nodo.esHoja() && nodo.getEspecie().equalsIgnoreCase(especie)) {
+        if (nodo == null) return null;
+        if (nodo.esHoja() && normalizarTexto(nodo.getEspecie()).equals(especie)) {
             return nodo;
         }
-
-        // Buscar en el subárbol izquierdo
-        Nodo resultadoIzquierdo = buscarRec(nodo.getIzquierdo(), especie);
-        if (resultadoIzquierdo != null) {
-            return resultadoIzquierdo;
-        }
-
-        // Buscar en el subárbol derecho
-        return buscarRec(nodo.getDerecho(), especie);
+        Nodo izquierda = buscarRec(nodo.getIzquierdo(), especie);
+        return (izquierda != null) ? izquierda : buscarRec(nodo.getDerecho(), especie);
     }
 
-    // Método para cargar el árbol desde un archivo JSON
+    private String normalizarTexto(String texto) {
+        return texto.trim().toLowerCase().replace(" ", "");
+    }
+
     public void cargarDesdeJSON(String rutaArchivo) {
         try (BufferedReader br = new BufferedReader(new FileReader(rutaArchivo))) {
             StringBuilder contenido = new StringBuilder();
             String linea;
-            while ((linea = br.readLine()) != null) {
-                contenido.append(linea);
-            }
+            while ((linea = br.readLine()) != null) contenido.append(linea);
+            
             procesarJSON(contenido.toString());
-        } catch (IOException e) {
-            e.printStackTrace();
+            nodoActual = raiz;
+            JOptionPane.showMessageDialog(null, "Árbol cargado correctamente");
+        } catch (IOException | JSONException e) {
+            JOptionPane.showMessageDialog(null, "Error en el JSON:\n" + e.getMessage());
         }
     }
 
-    // Método para procesar el JSON y construir el árbol
-    private void procesarJSON(String json) {
+    private void procesarJSON(String json) throws JSONException {
         JSONObject jsonObject = new JSONObject(json);
-        JSONArray especiesArray = jsonObject.getJSONArray("ClaveDicotomica");
+        String clavePrincipal = jsonObject.keys().next();
+        JSONArray especiesArray = jsonObject.getJSONArray(clavePrincipal);
 
         for (int i = 0; i < especiesArray.length(); i++) {
             JSONObject especieObject = especiesArray.getJSONObject(i);
             String nombreEspecie = especieObject.keys().next();
             JSONArray preguntasArray = especieObject.getJSONArray(nombreEspecie);
 
-            Nodo nodoActual = null;
+            Nodo current = raiz;
             for (int j = 0; j < preguntasArray.length(); j++) {
-                JSONObject preguntaObject = preguntasArray.getJSONObject(j);
-                String pregunta = preguntaObject.keys().next();
-                boolean respuesta = preguntaObject.getBoolean(pregunta);
+                JSONObject preguntaObj = preguntasArray.getJSONObject(j);
+                String pregunta = preguntaObj.keys().next();
+                boolean respuesta = preguntaObj.getBoolean(pregunta);
 
-                if (nodoActual == null) {
-                    this.insertar(pregunta, respuesta, nombreEspecie);
-                    nodoActual = this.raiz;
+                if (current == null) {
+                    raiz = new Nodo(pregunta, null);
+                    current = raiz;
                 } else {
                     if (respuesta) {
-                        nodoActual.setIzquierdo(new Nodo(pregunta, nombreEspecie));
-                        nodoActual = nodoActual.getIzquierdo();
+                        if (current.getIzquierdo() == null) {
+                            current.setIzquierdo(new Nodo(pregunta, null));
+                        }
+                        current = current.getIzquierdo();
                     } else {
-                        nodoActual.setDerecho(new Nodo(pregunta, nombreEspecie));
-                        nodoActual = nodoActual.getDerecho();
+                        if (current.getDerecho() == null) {
+                            current.setDerecho(new Nodo(pregunta, null));
+                        }
+                        current = current.getDerecho();
                     }
                 }
             }
+            
+            if (!current.esHoja()) {
+                throw new JSONException("Especie '" + nombreEspecie + "' no tiene preguntas suficientes");
+            }
+            current.setEspecie(nombreEspecie);
         }
+    }
+
+    public Nodo getRaiz() {
+        return raiz;
     }
 }

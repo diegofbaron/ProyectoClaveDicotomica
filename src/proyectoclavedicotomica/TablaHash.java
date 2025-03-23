@@ -8,29 +8,36 @@ package proyectoclavedicotomica;
  *
  * @author diego
  */
+
+/**
+ * Clase que representa una tabla de hash para almacenar especies.
+ */
+import java.util.LinkedList;
+import java.util.List;
+
 public class TablaHash {
-    private static final int TAMANO_TABLA = 128;
-    private Nodo[] tabla;
+    private static final int TAMANO = 128;
+    private List<Nodo>[] tabla;
 
-    // Constructor
     public TablaHash() {
-        tabla = new Nodo[TAMANO_TABLA];
+        tabla = new LinkedList[TAMANO];
+        for (int i = 0; i < TAMANO; i++) {
+            tabla[i] = new LinkedList<>();
+        }
     }
 
-    // Método para insertar una especie en la tabla hash
-    public void insertar(String especie, Nodo nodo) {
-        int hash = calcularHash(especie);
-        tabla[hash] = nodo;
+    public void insertar(String clave, Nodo valor) {
+        int indice = Math.abs(clave.hashCode()) % TAMANO;
+        tabla[indice].add(valor);
     }
 
-    // Método para buscar una especie en la tabla hash
-    public Nodo buscar(String especie) {
-        int hash = calcularHash(especie);
-        return tabla[hash];
-    }
-
-    // Método para calcular el hash de una especie
-    private int calcularHash(String especie) {
-        return Math.abs(especie.hashCode()) % TAMANO_TABLA;
+    public Nodo buscar(String clave) {
+        int indice = Math.abs(clave.hashCode()) % TAMANO;
+        for (Nodo nodo : tabla[indice]) {
+            if (nodo.getEspecie().equalsIgnoreCase(clave)) {
+                return nodo;
+            }
+        }
+        return null;
     }
 }

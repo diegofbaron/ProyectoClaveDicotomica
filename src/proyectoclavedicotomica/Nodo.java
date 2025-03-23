@@ -13,14 +13,15 @@ package proyectoclavedicotomica;
  *
  * @author diego
  */
+/**
+ * Clase que representa un nodo en el árbol.
+ */
 public class Nodo {
-    // Atributos
-    private String pregunta;      // La pregunta asociada al nodo
-    private String especie;       // La especie (nodo hoja)
-    private Nodo izquierdo;       // Referencia al hijo izquierdo
-    private Nodo derecho;         // Referencia al hijo derecho
+    private String pregunta;
+    private String especie;
+    private Nodo izquierdo;
+    private Nodo derecho;
 
-    // Constructor para nodos internos (preguntas)
     public Nodo(String pregunta, String especie) {
         this.pregunta = pregunta;
         this.especie = especie;
@@ -28,7 +29,6 @@ public class Nodo {
         this.derecho = null;
     }
 
-    // Getters y Setters
     public String getPregunta() {
         return pregunta;
     }
@@ -61,16 +61,12 @@ public class Nodo {
         this.derecho = derecho;
     }
 
-    // Método para verificar si el nodo es una hoja (no tiene hijos)
     public boolean esHoja() {
-        return izquierdo == null && derecho == null;
+        return (izquierdo == null && derecho == null);
     }
 
     @Override
     public String toString() {
-        return "Nodo{" +
-                "pregunta='" + pregunta + '\'' +
-                ", especie='" + especie + '\'' +
-                '}';
+        return "Nodo{" + "pregunta='" + pregunta + '\'' + ", especie='" + especie + '\'' + '}';
     }
 }
