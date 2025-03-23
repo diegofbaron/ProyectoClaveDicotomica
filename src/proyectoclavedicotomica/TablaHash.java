@@ -4,14 +4,6 @@
  */
 package proyectoclavedicotomica;
 
-/**
- *
- * @author diego
- */
-
-/**
- * Clase que representa una tabla de hash para almacenar especies.
- */
 import java.util.LinkedList;
 import java.util.List;
 
@@ -32,12 +24,16 @@ public class TablaHash {
     }
 
     public Nodo buscar(String clave) {
-        int indice = Math.abs(clave.hashCode()) % TAMANO;
-        for (Nodo nodo : tabla[indice]) {
-            if (nodo.getEspecie().equalsIgnoreCase(clave)) {
-                return nodo;
-            }
+    int indice = Math.abs(clave.hashCode()) % TAMANO;
+    for (Nodo nodo : tabla[indice]) {
+        if (normalizarTexto(nodo.getEspecie()).equals(clave)) {
+            return nodo;
         }
-        return null;
     }
+    return null;
+}
+
+private String normalizarTexto(String texto) {
+    return texto.trim().toLowerCase().replace(" ", "");
+}
 }

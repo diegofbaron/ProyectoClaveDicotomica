@@ -4,10 +4,6 @@
  */
 package proyectoclavedicotomica;
 
-/**
- *
- * @author diego
- */
 import org.graphstream.graph.Graph;
 import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.swing_viewer.SwingViewer;
@@ -27,7 +23,10 @@ public class VisualizadorArbol {
     }
 
     public ViewPanel mostrarArbol(Nodo raiz) {
-        if (raiz == null) return null;
+        if (raiz == null) {
+            System.out.println("El árbol está vacío.");
+            return null;
+        }
         
         grafo.clear(); // Limpiar grafo existente
         agregarNodos(raiz);
@@ -35,7 +34,7 @@ public class VisualizadorArbol {
         // Configurar visor integrable en Swing
         visor = new SwingViewer(
             grafo, 
-            SwingViewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD
+            Viewer.ThreadingModel.GRAPH_IN_ANOTHER_THREAD
         );
         
         panelVisual = (ViewPanel) visor.addDefaultView(false);
@@ -49,8 +48,10 @@ public class VisualizadorArbol {
             ? nodo.getPregunta() 
             : nodo.getEspecie();
         
+        // Agregar el nodo al grafo
         grafo.addNode(id).setAttribute("ui.label", id);
 
+        // Agregar nodo izquierdo (respuesta "Sí")
         if (nodo.getIzquierdo() != null) {
             String hijoId = (nodo.getIzquierdo().getPregunta() != null) 
                 ? nodo.getIzquierdo().getPregunta() 
@@ -59,6 +60,7 @@ public class VisualizadorArbol {
             agregarNodos(nodo.getIzquierdo());
         }
 
+        // Agregar nodo derecho (respuesta "No")
         if (nodo.getDerecho() != null) {
             String hijoId = (nodo.getDerecho().getPregunta() != null) 
                 ? nodo.getDerecho().getPregunta() 

@@ -4,6 +4,8 @@
  */
 package proyectoclavedicotomica;
 
+
+
 import org.json.JSONArray;
 import org.json.JSONObject;
 import org.json.JSONException;
@@ -40,21 +42,26 @@ public class Arbol {
     }
 
     public Nodo buscar(String especie) {
-        return buscarRec(raiz, normalizarTexto(especie));
-    }
+    return buscarRec(raiz, normalizarTexto(especie));
+}
 
-    private Nodo buscarRec(Nodo nodo, String especie) {
-        if (nodo == null) return null;
-        if (nodo.esHoja() && normalizarTexto(nodo.getEspecie()).equals(especie)) {
-            return nodo;
-        }
-        Nodo izquierda = buscarRec(nodo.getIzquierdo(), especie);
-        return (izquierda != null) ? izquierda : buscarRec(nodo.getDerecho(), especie);
+private Nodo buscarRec(Nodo nodo, String especie) {
+    if (nodo == null) return null;
+    if (nodo.esHoja() && normalizarTexto(nodo.getEspecie()).equals(especie)) {
+        return nodo;
     }
+    Nodo izquierda = buscarRec(nodo.getIzquierdo(), especie);
+    return (izquierda != null) ? izquierda : buscarRec(nodo.getDerecho(), especie);
+}
 
-    private String normalizarTexto(String texto) {
-        return texto.trim().toLowerCase().replace(" ", "");
-    }
+private String normalizarTexto(String texto) {
+    return texto.trim().toLowerCase().replace(" ", "");
+}
+
+    
+    
+
+   
 
     public void cargarDesdeJSON(String rutaArchivo) {
         try (BufferedReader br = new BufferedReader(new FileReader(rutaArchivo))) {

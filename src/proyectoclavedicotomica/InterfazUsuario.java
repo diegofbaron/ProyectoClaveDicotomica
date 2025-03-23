@@ -113,36 +113,36 @@ public class InterfazUsuario extends JFrame {
     }
 
     private void buscarEspecie() {
-        String especie = buscarField.getText().trim().toLowerCase().replace(" ", "");
-        if (especie.isEmpty()) {
-            resultadoArea.setText("Ingrese un nombre de especie.");
-            return;
-        }
-
-        resultadoArea.setText("");
-
-        long inicioArbol = System.nanoTime();
-        Nodo resultadoArbol = arbol.buscar(especie);
-        long tiempoArbol = System.nanoTime() - inicioArbol;
-
-        long inicioHash = System.nanoTime();
-        Nodo resultadoHash = tablaHash.buscar(especie);
-        long tiempoHash = System.nanoTime() - inicioHash;
-
-        if (resultadoArbol != null) {
-            resultadoArea.append("Árbol: " + resultadoArbol.getEspecie() + " (" + tiempoArbol + " ns)\n");
-        } else {
-            resultadoArea.append("Especie no encontrada en el árbol.\n");
-        }
-
-        if (resultadoHash != null) {
-            resultadoArea.append("Hash: " + resultadoHash.getEspecie() + " (" + tiempoHash + " ns)\n");
-        } else {
-            resultadoArea.append("Especie no encontrada en la tabla hash.\n");
-        }
+    String especie = buscarField.getText().trim().toLowerCase().replace(" ", "");
+    if (especie.isEmpty()) {
+        resultadoArea.setText("Ingrese un nombre de especie.");
+        return;
     }
 
-    private void mostrarArbolGrafico() {
+    resultadoArea.setText("");
+
+    long inicioArbol = System.nanoTime();
+    Nodo resultadoArbol = arbol.buscar(especie);
+    long tiempoArbol = System.nanoTime() - inicioArbol;
+
+    long inicioHash = System.nanoTime();
+    Nodo resultadoHash = tablaHash.buscar(especie);
+    long tiempoHash = System.nanoTime() - inicioHash;
+
+    if (resultadoArbol != null) {
+        resultadoArea.append("Árbol: " + resultadoArbol.getEspecie() + " (" + tiempoArbol + " ns)\n");
+    } else {
+        resultadoArea.append("Especie no encontrada en el árbol.\n");
+    }
+
+    if (resultadoHash != null) {
+        resultadoArea.append("Hash: " + resultadoHash.getEspecie() + " (" + tiempoHash + " ns)\n");
+    } else {
+        resultadoArea.append("Especie no encontrada en la tabla hash.\n");
+    }
+}
+
+private void mostrarArbolGrafico() {
     if (arbol.getRaiz() == null) {
         JOptionPane.showMessageDialog(null, "Primero cargue un archivo JSON.");
         return;
@@ -151,6 +151,11 @@ public class InterfazUsuario extends JFrame {
     VisualizadorArbol visualizador = new VisualizadorArbol();
     ViewPanel panelArbol = visualizador.mostrarArbol(arbol.getRaiz());
 
+    if (panelArbol == null) {
+        JOptionPane.showMessageDialog(null, "No se pudo generar el árbol.");
+        return;
+    }
+
     JFrame ventanaArbol = new JFrame("Árbol Dicotómico");
     ventanaArbol.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
     ventanaArbol.add(panelArbol);
@@ -158,28 +163,4 @@ public class InterfazUsuario extends JFrame {
     ventanaArbol.setLocationRelativeTo(null);
     ventanaArbol.setVisible(true);
 }
-
-    private void agregarNodosGrafico(Graph graph, Nodo nodo) {
-        if (nodo == null) return;
-        String id = (nodo.getPregunta() != null) ? nodo.getPregunta() : nodo.getEspecie();
-        graph.addNode(id).setAttribute("ui.label", id);
-
-        if (nodo.getIzquierdo() != null) {
-            String hijoId = (nodo.getIzquierdo().getPregunta() != null) ? 
-                nodo.getIzquierdo().getPregunta() : nodo.getIzquierdo().getEspecie();
-            graph.addEdge(id + "-" + hijoId, id, hijoId);
-            agregarNodosGrafico(graph, nodo.getIzquierdo());
-        }
-
-        if (nodo.getDerecho() != null) {
-            String hijoId = (nodo.getDerecho().getPregunta() != null) ? 
-                nodo.getDerecho().getPregunta() : nodo.getDerecho().getEspecie();
-            graph.addEdge(id + "-" + hijoId, id, hijoId);
-            agregarNodosGrafico(graph, nodo.getDerecho());
-        }
-    }
-
-    public static void main(String[] args) {
-        new InterfazUsuario();
-    }
 }

@@ -4,17 +4,6 @@
  */
 package proyectoclavedicotomica;
 
-/**
- *
- * @author diego
- */
-import javax.swing.filechooser.FileFilter;
-import java.io.File;
-
-/**
- * Filtro para archivos JSON.
- * Permite mostrar solo archivos con extensión .json en el JFileChooser.
- */
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
 
