@@ -31,19 +31,17 @@ public class Nodo {
         this.clave = generarClaveUnica();
     }
 
-    private String generarClaveUnica() {
-        return (pregunta != null) 
-            ? pregunta.trim().toLowerCase()
-                .replace(" ", "")
-                .replace("á", "a").replace("é", "e")
-                .replace("í", "i").replace("ó", "o")
-                .replace("ú", "u")
-            : "Especie-" + especie.trim().toLowerCase()
-                .replace(" ", "")
-                .replace("á", "a").replace("é", "e")
-                .replace("í", "i").replace("ó", "o")
-                .replace("ú", "u");
-    }
+    
+
+private String generarClaveUnica() {
+    return (pregunta != null) 
+        ? normalizarTexto(pregunta) 
+        : "Especie-" + normalizarTexto(especie);
+}
+
+private String normalizarTexto(String texto) {
+    return texto.trim().toLowerCase().replace(" ", "");
+}
 
     public String getPregunta() { return pregunta; }
     public String getEspecie() { return especie; }

@@ -15,11 +15,12 @@ public class InterfazUsuario extends JFrame {
     private TablaHash tablaHash;
     private JLabel preguntaLabel;
     private JButton siButton, noButton, cargarButton, buscarButton, mostrarArbolButton;
+    private JButton verEspecieButton, reiniciarButton;
     private JTextField buscarField;
     private JTextArea resultadoArea;
     private JFrame ventanaArbol;
     private JPanel panelCentral;
-    private JScrollPane scrollResultados; // Declaración corregida
+    private JScrollPane scrollResultados;
 
     public InterfazUsuario() {
         arbol = new Arbol();
@@ -59,12 +60,20 @@ public class InterfazUsuario extends JFrame {
         // Área de resultados con scroll
         resultadoArea = new JTextArea();
         resultadoArea.setEditable(false);
-        scrollResultados = new JScrollPane(resultadoArea); // Inicialización corregida
+        scrollResultados = new JScrollPane(resultadoArea);
+
+        // Panel de botones adicionales
+        verEspecieButton = new JButton("Ver Especie Actual");
+        reiniciarButton = new JButton("Reiniciar");
+        JPanel panelBotonesAdicionales = new JPanel();
+        panelBotonesAdicionales.add(verEspecieButton);
+        panelBotonesAdicionales.add(reiniciarButton);
 
         // Configuración del panel central
         panelCentral.add(preguntaLabel, BorderLayout.NORTH);
         panelCentral.add(panelBotones, BorderLayout.CENTER);
         panelCentral.add(scrollResultados, BorderLayout.SOUTH);
+        panelCentral.add(panelBotonesAdicionales, BorderLayout.PAGE_END);
 
         // Panel derecho (búsqueda)
         JPanel panelDerecha = new JPanel(new BorderLayout());
@@ -89,6 +98,8 @@ public class InterfazUsuario extends JFrame {
         cargarButton.addActionListener(e -> cargarJSON());
         buscarButton.addActionListener(this::buscarEspecie);
         mostrarArbolButton.addActionListener(e -> mostrarArbolGrafico());
+        verEspecieButton.addActionListener(e -> mostrarEspecieActual());
+        reiniciarButton.addActionListener(e -> reiniciarFlujo());
     }
 
     private void cargarJSON() {
@@ -141,22 +152,54 @@ public class InterfazUsuario extends JFrame {
     }
 
     private void manejarRespuesta(boolean respuesta) {
-        arbol.avanzar(respuesta);
-        SwingUtilities.invokeLater(() -> {
-            actualizarPregunta();
-            actualizarPanelCentral();
-        });
+    if (arbol == null || arbol.getRaiz() == null) {
+        JOptionPane.showMessageDialog(null, 
+            "Cargue un archivo JSON primero.", 
+            "Error", 
+            JOptionPane.ERROR_MESSAGE);
+        return;
+    }
+
+    // Avanzar en el árbol según la respuesta
+    arbol.avanzar(respuesta);
+
+    // Actualizar la interfaz
+    SwingUtilities.invokeLater(() -> {
+        actualizarPregunta();
+        actualizarPanelCentral();
+    });
+}
+
+    private void mostrarEspecieActual() {
+        String especie = arbol.getEspecieActual();
+        if (especie != null) {
+            JOptionPane.showMessageDialog(null, 
+                "Especie actual: " + especie, 
+                "Información", 
+                JOptionPane.INFORMATION_MESSAGE);
+        } else {
+            JOptionPane.showMessageDialog(null, 
+                "Aún no has llegado a una especie. ¡Sigue respondiendo!", 
+                "Información", 
+                JOptionPane.WARNING_MESSAGE);
+        }
     }
 
     private void actualizarPregunta() {
-        if (arbol.esEspecie()) {
-            preguntaLabel.setText("Especie identificada: " + arbol.getEspecieActual());
-            siButton.setEnabled(false);
-            noButton.setEnabled(false);
-        } else {
-            preguntaLabel.setText(arbol.getPreguntaActual());
-        }
+    if (arbol == null || arbol.getRaiz() == null) {
+        preguntaLabel.setText("Cargue un archivo JSON para comenzar");
+        return;
     }
+
+    String especieActual = arbol.getEspecieActual();
+    if (especieActual != null) {
+        preguntaLabel.setText("Especie actual: " + especieActual);
+        siButton.setEnabled(false);
+        noButton.setEnabled(false);
+    } else {
+        preguntaLabel.setText(arbol.getPreguntaActual());
+    }
+}
 
     private void actualizarPanelCentral() {
         panelCentral.revalidate();

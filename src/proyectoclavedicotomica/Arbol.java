@@ -124,55 +124,52 @@ public class Arbol {
         String nombreEspecie = especieObject.keys().next();
         JSONArray preguntasArray = especieObject.getJSONArray(nombreEspecie);
 
-        Nodo parent = raiz;
+        Nodo parent = raiz; // Comenzar desde la raíz para cada especie
 
         for (int j = 0; j < preguntasArray.length(); j++) {
             JSONObject preguntaObj = preguntasArray.getJSONObject(j);
             String preguntaTextoOriginal = preguntaObj.keys().next();
-            String preguntaTexto = normalizarTexto(preguntaTextoOriginal);
             boolean respuesta = preguntaObj.getBoolean(preguntaTextoOriginal);
+            String preguntaTexto = normalizarTexto(preguntaTextoOriginal);
 
-            // Buscar o crear nodo
-            Nodo nodoActual = nodosCreados.buscar(preguntaTexto);
+            // Clave única: especie + índice de pregunta + texto de pregunta
+            String claveUnica = nombreEspecie + "-" + j + "-" + preguntaTexto;
+            Nodo nodoActual = nodosCreados.buscar(claveUnica);
+
             if (nodoActual == null) {
                 nodoActual = new Nodo(preguntaTexto, null);
-                nodoActual.setClave(preguntaTexto);
+                nodoActual.setClave(claveUnica);
                 nodosCreados.agregar(nodoActual);
-                if (raiz == null) raiz = nodoActual;
+
+                // Establecer la raíz solo si es la primera pregunta de la primera especie
+                if (raiz == null && i == 0 && j == 0) {
+                    raiz = nodoActual;
+                }
             }
 
-            // Vincular al padre según la respuesta
+            // Vincular al padre según la respuesta (Sí -> izquierda, No -> derecha)
             if (parent != null) {
                 if (respuesta) {
-                    if (parent.getIzquierdo() == null) {
-                        parent.setIzquierdo(nodoActual);
-                    }
+                    parent.setIzquierdo(nodoActual); // Sí
                 } else {
-                    if (parent.getDerecho() == null) {
-                        parent.setDerecho(nodoActual);
-                    }
+                    parent.setDerecho(nodoActual);    // No
                 }
                 padres.agregar(nodoActual, parent);
             }
 
-            parent = nodoActual; // Movido DENTRO del bucle de preguntas
-        }
+            // Asignar la especie al último nodo del camino
+            if (j == preguntasArray.length() - 1) {
+                nodoActual.setEspecie(nombreEspecie);
+            }
 
-        // Asignar especie al último nodo (sin eliminar sus hijos)
-        if (parent != null) {
-            parent.setEspecie(nombreEspecie);
+            parent = nodoActual; // El nodo actual será el padre de la siguiente pregunta
         }
     }
 }
 
     private String normalizarTexto(String texto) {
-        return texto.trim()
-            .toLowerCase()
-            .replace(" ", "")
-            .replace("á", "a").replace("é", "e")
-            .replace("í", "i").replace("ó", "o")
-            .replace("ú", "u");
-    }
+    return texto.trim().toLowerCase().replace(" ", "_"); // Ejemplo: "Hojas como agujas" → "hojas_como_agujas"
+}
 
     public void imprimirArbol() {
         imprimirNodo(raiz, 0);
@@ -188,18 +185,17 @@ public class Arbol {
     }
 
     public void avanzar(boolean respuesta) {
-    if (nodoActual == null) return;
+    if (nodoActual == null || nodoActual.esHoja()) return;
 
     Nodo siguiente = respuesta ? nodoActual.getIzquierdo() : nodoActual.getDerecho();
+
     if (siguiente != null) {
         nodoActual = siguiente;
     } else {
-        // Mostrar especie si es hoja aunque no tenga hijos
-        if (nodoActual.esHoja()) {
-            JOptionPane.showMessageDialog(null, "Especie identificada: " + nodoActual.getEspecie());
-        } else {
-            JOptionPane.showMessageDialog(null, "¡Camino inválido! Reiniciando...");
-        }
+        JOptionPane.showMessageDialog(null, 
+            "¡Camino inválido! Reiniciando...", 
+            "Error", 
+            JOptionPane.ERROR_MESSAGE);
         reiniciarNodoActual();
     }
 }
@@ -234,11 +230,18 @@ public class Arbol {
         return (nodoActual != null) && nodoActual.esHoja();
     }
 
-    public String getEspecieActual() {
-        return (nodoActual != null && nodoActual.esHoja()) ? nodoActual.getEspecie() : null;
-    }
 
     public Nodo obtenerPadre(Nodo hijo) {
         return padres.obtenerPadre(hijo);
     }
+    public String getEspecieActual() {
+        if (nodoActual != null) {
+            return nodoActual.getEspecie();
+        }
+        return null;
+    }
+    public boolean estaEnEspecie() {
+        return (nodoActual != null && nodoActual.esHoja());
+    }
+    
 }
