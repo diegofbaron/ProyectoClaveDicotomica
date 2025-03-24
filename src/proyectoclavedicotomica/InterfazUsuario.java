@@ -4,13 +4,10 @@
  */
 package proyectoclavedicotomica;
 
-import org.graphstream.graph.Graph;
-import org.graphstream.graph.implementations.SingleGraph;
 import org.graphstream.ui.swing_viewer.ViewPanel;
-import org.graphstream.ui.view.Viewer;
 import javax.swing.*;
+import java.awt.*;
 import java.awt.event.ActionEvent;
-import java.awt.event.ActionListener;
 import java.io.File;
 
 public class InterfazUsuario extends JFrame {
@@ -20,6 +17,9 @@ public class InterfazUsuario extends JFrame {
     private JButton siButton, noButton, cargarButton, buscarButton, mostrarArbolButton;
     private JTextField buscarField;
     private JTextArea resultadoArea;
+    private JFrame ventanaArbol;
+    private JPanel panelCentral;
+    private JScrollPane scrollResultados; // Declaración corregida
 
     public InterfazUsuario() {
         arbol = new Arbol();
@@ -29,40 +29,66 @@ public class InterfazUsuario extends JFrame {
 
     private void configurarInterfaz() {
         setTitle("Clave Dicotómica");
-        setSize(800, 600);
+        setSize(1000, 700);
         setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
+        setLayout(new BorderLayout());
 
-        preguntaLabel = new JLabel("Cargue un archivo JSON para comenzar.");
-        siButton = new JButton("Sí"); 
-        noButton = new JButton("No");
+        // Panel superior
+        JPanel panelSuperior = new JPanel(new FlowLayout(FlowLayout.LEFT));
         cargarButton = new JButton("Cargar JSON");
-        buscarField = new JTextField(20); 
-        buscarButton = new JButton("Buscar");
-        resultadoArea = new JTextArea(10, 50); 
-        resultadoArea.setEditable(false);
         mostrarArbolButton = new JButton("Mostrar Árbol");
+        panelSuperior.add(cargarButton);
+        panelSuperior.add(mostrarArbolButton);
 
-        siButton.setEnabled(false); 
+        // Panel central
+        panelCentral = new JPanel(new BorderLayout());
+        preguntaLabel = new JLabel(" Cargue un archivo JSON para comenzar", SwingConstants.CENTER);
+        preguntaLabel.setFont(new Font("Arial", Font.BOLD, 16));
+
+        // Panel de botones Sí/No
+        JPanel panelBotones = new JPanel();
+        siButton = new JButton("Sí");
+        noButton = new JButton("No");
+        siButton.addActionListener(e -> manejarRespuesta(true));
+        noButton.addActionListener(e -> manejarRespuesta(false));
+        siButton.setEnabled(false);
         noButton.setEnabled(false);
+        panelBotones.add(siButton);
+        panelBotones.add(noButton);
 
-        JPanel panel = new JPanel();
-        panel.add(cargarButton); 
-        panel.add(preguntaLabel);
-        panel.add(siButton); 
-        panel.add(noButton); 
-        panel.add(buscarField);
-        panel.add(buscarButton); 
-        panel.add(mostrarArbolButton);
-        panel.add(new JScrollPane(resultadoArea));
-        add(panel);
+        // Área de resultados con scroll
+        resultadoArea = new JTextArea();
+        resultadoArea.setEditable(false);
+        scrollResultados = new JScrollPane(resultadoArea); // Inicialización corregida
 
+        // Configuración del panel central
+        panelCentral.add(preguntaLabel, BorderLayout.NORTH);
+        panelCentral.add(panelBotones, BorderLayout.CENTER);
+        panelCentral.add(scrollResultados, BorderLayout.SOUTH);
+
+        // Panel derecho (búsqueda)
+        JPanel panelDerecha = new JPanel(new BorderLayout());
+        buscarField = new JTextField(15);
+        buscarButton = new JButton("Buscar Especie");
+        JPanel panelBusqueda = new JPanel();
+        panelBusqueda.add(new JLabel("Nombre:"));
+        panelBusqueda.add(buscarField);
+        panelBusqueda.add(buscarButton);
+        panelDerecha.add(panelBusqueda, BorderLayout.NORTH);
+
+        // Contenedor principal
+        JPanel panelContenedor = new JPanel(new GridLayout(1, 2));
+        panelContenedor.add(panelCentral);
+        panelContenedor.add(panelDerecha);
+
+        // Ensamblado final
+        add(panelSuperior, BorderLayout.NORTH);
+        add(panelContenedor, BorderLayout.CENTER);
+
+        // Listeners
         cargarButton.addActionListener(e -> cargarJSON());
-        siButton.addActionListener(e -> avanzar(true));
-        noButton.addActionListener(e -> avanzar(false));
-        buscarButton.addActionListener(e -> buscarEspecie());
+        buscarButton.addActionListener(this::buscarEspecie);
         mostrarArbolButton.addActionListener(e -> mostrarArbolGrafico());
-
-        setVisible(true);
     }
 
     private void cargarJSON() {
@@ -70,97 +96,150 @@ public class InterfazUsuario extends JFrame {
         fileChooser.setFileFilter(new FiltroJSON());
         if (fileChooser.showOpenDialog(null) == JFileChooser.APPROVE_OPTION) {
             File archivo = fileChooser.getSelectedFile();
-            arbol.cargarDesdeJSON(archivo.getAbsolutePath());
-            llenarTablaHash(arbol.getRaiz());
-            actualizarInterfaz();
-        }
-    }
+            try {
+                arbol = new Arbol();
+                arbol.cargarDesdeJSON(archivo.getAbsolutePath());
+                tablaHash = new TablaHash();
+                llenarTablaHash(arbol.getRaiz());
 
-    private void avanzar(boolean respuesta) {
-        arbol.avanzar(respuesta);
-        actualizarInterfaz();
-    }
-
-    private void actualizarInterfaz() {
-        if (arbol.esEspecie()) {
-            preguntaLabel.setText("Especie encontrada: " + arbol.getEspecieActual());
-            siButton.setEnabled(false); 
-            noButton.setEnabled(false);
-        } else {
-            preguntaLabel.setText(arbol.getPreguntaActual());
-            siButton.setEnabled(true); 
-            noButton.setEnabled(true);
+                SwingUtilities.invokeLater(() -> {
+                    siButton.setEnabled(true);
+                    noButton.setEnabled(true);
+                    reiniciarFlujo();
+                });
+            } catch (Exception e) {
+                JOptionPane.showMessageDialog(null, 
+                    "Error al cargar el archivo:\n" + e.getMessage(), 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+            }
         }
-        resultadoArea.setText(arbolToString(arbol.getRaiz(), ""));
     }
 
     private void llenarTablaHash(Nodo nodo) {
         if (nodo == null) return;
         if (nodo.esHoja()) {
-            tablaHash.insertar(nodo.getEspecie().toLowerCase().replace(" ", ""), nodo);
+            tablaHash.insertar(nodo.getEspecie(), nodo);
         }
         llenarTablaHash(nodo.getIzquierdo());
         llenarTablaHash(nodo.getDerecho());
     }
 
-    private String arbolToString(Nodo nodo, String prefijo) {
-        if (nodo == null) return "";
-        String str = prefijo + nodo.getPregunta() + "\n";
-        if (nodo.esHoja()) str += prefijo + "-> " + nodo.getEspecie() + "\n";
-        str += arbolToString(nodo.getIzquierdo(), prefijo + "  ");
-        str += arbolToString(nodo.getDerecho(), prefijo + "  ");
-        return str;
+    private void reiniciarFlujo() {
+        SwingUtilities.invokeLater(() -> {
+            if (arbol.getRaiz() == null) {
+                JOptionPane.showMessageDialog(null, 
+                    "Cargue un archivo primero.", 
+                    "Error", 
+                    JOptionPane.ERROR_MESSAGE);
+                return;
+            }
+            arbol.reiniciarNodoActual();
+            actualizarPregunta();
+            actualizarPanelCentral();
+        });
     }
 
-    private void buscarEspecie() {
-    String especie = buscarField.getText().trim().toLowerCase().replace(" ", "");
-    if (especie.isEmpty()) {
-        resultadoArea.setText("Ingrese un nombre de especie.");
-        return;
+    private void manejarRespuesta(boolean respuesta) {
+        arbol.avanzar(respuesta);
+        SwingUtilities.invokeLater(() -> {
+            actualizarPregunta();
+            actualizarPanelCentral();
+        });
     }
 
-    resultadoArea.setText("");
-
-    long inicioArbol = System.nanoTime();
-    Nodo resultadoArbol = arbol.buscar(especie);
-    long tiempoArbol = System.nanoTime() - inicioArbol;
-
-    long inicioHash = System.nanoTime();
-    Nodo resultadoHash = tablaHash.buscar(especie);
-    long tiempoHash = System.nanoTime() - inicioHash;
-
-    if (resultadoArbol != null) {
-        resultadoArea.append("Árbol: " + resultadoArbol.getEspecie() + " (" + tiempoArbol + " ns)\n");
-    } else {
-        resultadoArea.append("Especie no encontrada en el árbol.\n");
+    private void actualizarPregunta() {
+        if (arbol.esEspecie()) {
+            preguntaLabel.setText("Especie identificada: " + arbol.getEspecieActual());
+            siButton.setEnabled(false);
+            noButton.setEnabled(false);
+        } else {
+            preguntaLabel.setText(arbol.getPreguntaActual());
+        }
     }
 
-    if (resultadoHash != null) {
-        resultadoArea.append("Hash: " + resultadoHash.getEspecie() + " (" + tiempoHash + " ns)\n");
-    } else {
-        resultadoArea.append("Especie no encontrada en la tabla hash.\n");
-    }
-}
-
-private void mostrarArbolGrafico() {
-    if (arbol.getRaiz() == null) {
-        JOptionPane.showMessageDialog(null, "Primero cargue un archivo JSON.");
-        return;
+    private void actualizarPanelCentral() {
+        panelCentral.revalidate();
+        panelCentral.repaint();
     }
 
-    VisualizadorArbol visualizador = new VisualizadorArbol();
-    ViewPanel panelArbol = visualizador.mostrarArbol(arbol.getRaiz());
+    private void buscarEspecie(ActionEvent e) {
+        String especieInput = buscarField.getText().trim();
+        if (especieInput.isEmpty()) {
+            JOptionPane.showMessageDialog(null, 
+                "Ingrese un nombre de especie.", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
 
-    if (panelArbol == null) {
-        JOptionPane.showMessageDialog(null, "No se pudo generar el árbol.");
-        return;
+        // Búsqueda por hash
+        long inicioHash = System.nanoTime();
+        Nodo resultadoHash = tablaHash.buscar(especieInput);
+        long tiempoHash = System.nanoTime() - inicioHash;
+
+        // Búsqueda en árbol
+        long inicioArbol = System.nanoTime();
+        Nodo resultadoArbol = arbol.buscar(especieInput);
+        long tiempoArbol = System.nanoTime() - inicioArbol;
+
+        // Mostrar resultados
+        resultadoArea.setText("");
+        if (resultadoHash != null) {
+            resultadoArea.append("[Hash] Especie: " + resultadoHash.getEspecie() + "\n");
+            resultadoArea.append("Tiempo: " + tiempoHash + " ns\n");
+            resultadoArea.append("Camino: " + obtenerCamino(resultadoHash) + "\n\n");
+        }
+
+        if (resultadoArbol != null) {
+            resultadoArea.append("[Árbol] Especie: " + resultadoArbol.getEspecie() + "\n");
+            resultadoArea.append("Tiempo: " + tiempoArbol + " ns\n");
+            resultadoArea.append("Camino: " + obtenerCamino(resultadoArbol) + "\n");
+        } else {
+            resultadoArea.append("Especie no encontrada.\n");
+        }
     }
 
-    JFrame ventanaArbol = new JFrame("Árbol Dicotómico");
-    ventanaArbol.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
-    ventanaArbol.add(panelArbol);
-    ventanaArbol.pack();
-    ventanaArbol.setLocationRelativeTo(null);
-    ventanaArbol.setVisible(true);
-}
+    private String obtenerCamino(Nodo especie) {
+        StringBuilder camino = new StringBuilder();
+        Nodo actual = especie;
+        while (actual != null) {
+            String texto = actual.getPregunta() != null 
+                ? actual.getPregunta() 
+                : "Especie: " + actual.getEspecie();
+            camino.insert(0, texto + " → ");
+            actual = arbol.obtenerPadre(actual);
+        }
+        if (camino.length() > 3) camino.setLength(camino.length() - 3);
+        return camino.toString();
+    }
+
+    private void mostrarArbolGrafico() {
+        if (arbol == null || arbol.getRaiz() == null) {
+            JOptionPane.showMessageDialog(null, 
+                "Primero cargue un archivo JSON.", 
+                "Error", 
+                JOptionPane.ERROR_MESSAGE);
+            return;
+        }
+
+        if (ventanaArbol == null) {
+            ventanaArbol = new JFrame("Visualización del Árbol");
+            ventanaArbol.setDefaultCloseOperation(JFrame.DISPOSE_ON_CLOSE);
+            ventanaArbol.setSize(800, 600);
+        }
+
+        VisualizadorArbol visualizador = new VisualizadorArbol();
+        ViewPanel panelArbol = visualizador.mostrarArbol(arbol.getRaiz());
+        ventanaArbol.getContentPane().removeAll();
+        ventanaArbol.add(panelArbol);
+        ventanaArbol.revalidate();
+        ventanaArbol.setVisible(true);
+    }
+
+    public static void main(String[] args) {
+        SwingUtilities.invokeLater(() -> {
+            new InterfazUsuario().setVisible(true);
+        });
+    }
 }

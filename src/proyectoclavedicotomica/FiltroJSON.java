@@ -7,6 +7,9 @@ package proyectoclavedicotomica;
 import javax.swing.filechooser.FileFilter;
 import java.io.File;
 
+/**
+ * Filtra archivos JSON en el JFileChooser.
+ */
 public class FiltroJSON extends FileFilter {
     @Override
     public boolean accept(File f) {

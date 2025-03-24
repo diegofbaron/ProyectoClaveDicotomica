@@ -4,36 +4,32 @@
  */
 package proyectoclavedicotomica;
 
-import java.util.LinkedList;
-import java.util.List;
+
 
 public class TablaHash {
     private static final int TAMANO = 128;
-    private List<Nodo>[] tabla;
+    private ListaEnlazada[] tabla;
 
     public TablaHash() {
-        tabla = new LinkedList[TAMANO];
+        tabla = new ListaEnlazada[TAMANO];
         for (int i = 0; i < TAMANO; i++) {
-            tabla[i] = new LinkedList<>();
+            tabla[i] = new ListaEnlazada();
         }
     }
 
     public void insertar(String clave, Nodo valor) {
-        int indice = Math.abs(clave.hashCode()) % TAMANO;
-        tabla[indice].add(valor);
+        String claveNormalizada = normalizarTexto(clave);
+        int indice = Math.abs(claveNormalizada.hashCode()) % TAMANO;
+        tabla[indice].agregar(valor);
     }
 
     public Nodo buscar(String clave) {
-    int indice = Math.abs(clave.hashCode()) % TAMANO;
-    for (Nodo nodo : tabla[indice]) {
-        if (normalizarTexto(nodo.getEspecie()).equals(clave)) {
-            return nodo;
-        }
+        String claveNormalizada = normalizarTexto(clave);
+        int indice = Math.abs(claveNormalizada.hashCode()) % TAMANO;
+        return tabla[indice].buscar(claveNormalizada);
     }
-    return null;
-}
 
-private String normalizarTexto(String texto) {
-    return texto.trim().toLowerCase().replace(" ", "");
-}
+    private String normalizarTexto(String texto) {
+        return texto.trim().toLowerCase().replace(" ", "");
+    }
 }
