@@ -185,7 +185,7 @@ public class Arbol {
     }
 
     public void avanzar(boolean respuesta) {
-    if (nodoActual == null || nodoActual.esHoja()) return;
+    if (nodoActual == null || nodoActual.esHoja()) return; // No hacer nada si es hoja
 
     Nodo siguiente = respuesta ? nodoActual.getIzquierdo() : nodoActual.getDerecho();
 
@@ -193,10 +193,9 @@ public class Arbol {
         nodoActual = siguiente;
     } else {
         JOptionPane.showMessageDialog(null, 
-            "¡Camino inválido! Reiniciando...", 
+            "¡Camino inválido! No hay más preguntas.", 
             "Error", 
             JOptionPane.ERROR_MESSAGE);
-        reiniciarNodoActual();
     }
 }
 
